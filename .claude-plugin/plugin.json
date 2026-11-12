@@ -1,0 +1,9 @@
+{
+  "name": "kura",
+  "version": "1.0.0",
+  "description": "Kura, the corgi-fox from KuraNote, lives above your Claude Code prompt and reacts to what Claude does: thinks, reads, writes, gets it wrong, falls asleep.",
+  "author": { "name": "KuraNote", "url": "https://kuranote.app" },
+  "homepage": "https://kuranote.app/kura",
+  "license": "MIT",
+  "types": "./types/index.d.ts"
+}

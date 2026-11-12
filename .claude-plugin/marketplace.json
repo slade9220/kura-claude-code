@@ -1,0 +1,14 @@
+{
+  "name": "kura-claude-code",
+  "description": "Kura, the corgi-fox from KuraNote, above your Claude Code prompt.",
+  "owner": {
+    "name": "KuraNote",
+    "url": "https://kuranote.app"
+  },
+  "plugins": [
+    {
+      "name": "kura",
+      "source": "./"
+    }
+  ]
+}
