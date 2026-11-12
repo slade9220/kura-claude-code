@@ -1,7 +1,5 @@
 # Kura for Claude Code
 
-<img src="assets/thinking-0.png" width="160" align="right" alt="Kura thinking">
-
 Kura, the corgi-fox from [KuraNote](https://kuranote.app), lives above your Claude Code prompt
 and reacts to what Claude is doing, like the paperclip of old office software, minus the annoying part.
 
@@ -12,6 +10,19 @@ and reacts to what Claude is doing, like the paperclip of old office software, m
 - **Says "Done!"**, then falls asleep after 90 seconds of quiet
 
 When you send a message he does his best paperclip impression: *“It looks like you want…”*.
+
+![Kura thinking above the Claude Code prompt](screenshots/2-thinking.jpg)
+
+<table>
+<tr>
+<td><img src="screenshots/1-paperclip.jpg" alt="It looks like you want…"></td>
+<td><img src="screenshots/3-reading.jpg" alt="Kura sniffing around the code"></td>
+</tr>
+<tr>
+<td><img src="screenshots/4-oops.jpg" alt="Kura looking sorry when a test fails"></td>
+<td><img src="screenshots/5-done.jpg" alt="Kura saying Done!"></td>
+</tr>
+</table>
 
 ## Install
 
@@ -33,11 +44,23 @@ claude plugin install kura --marketplace slade9220/kura-claude-code
 In the Claude desktop app: click **+** next to the prompt box, then **Plugins**, **Add marketplace**
 with `slade9220/kura-claude-code`, then **Add plugin**.
 
-## Sharp or pixelated
+## Which terminal
 
-- In **Ghostty** and **kitty** Kura is a real image, as sharp as in the app.
-- In other terminals he is drawn with colored half blocks, so he looks a bit pixelated and needs
-  a little more room. Your terminal needs 24-bit color.
+Kura is a real picture only in terminals that can draw images. Everywhere else he is made of
+colored blocks: still Kura, but pixelated and a little bigger.
+
+| Terminal | Kura |
+| --- | --- |
+| [Ghostty](https://ghostty.org), [kitty](https://sw.kovidgoyal.net/kitty/) (macOS, Linux) | Sharp, as in the app |
+| macOS Terminal, iTerm2, Warp, VS Code | Colored blocks |
+| Windows Terminal | Colored blocks |
+
+- **macOS Terminal** can't show pictures inside the terminal, so there Kura is always made of blocks.
+  For a sharp Kura, install Ghostty (`brew install --cask ghostty`). Your Claude Code settings stay
+  the same; macOS asks once more for the permissions it gave to Terminal, like access to your Desktop.
+- **Windows** has no Ghostty or kitty yet, so Kura is made of blocks; Windows Terminal draws them well.
+  Set `KURA_LANG` to choose his language, since Windows doesn't tell him.
+- If the colors look wrong, your terminal doesn't support 24-bit color.
 
 ## Options
 
