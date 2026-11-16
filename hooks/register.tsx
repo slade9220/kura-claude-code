@@ -21,13 +21,13 @@ const hasPixels = atom({ plugin: 'kura', key: 'hasPixels' } as const, false)
 
 const pick = <T,>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)] as T
 
-// KuraNote's drawings, plus two from KuraPal: asleep (eyes shut, breathing, Zz) and happy.
+// KuraNote's drawings, plus KuraPal's asleep one (eyes shut, breathing, Zz).
 const FRAMES = { ...NOTE_FRAMES, ...PAL_FRAMES }
 
 // Which drawing for each mood here.
 const drawing: Record<Mood, keyof typeof FRAMES> = {
   sleep: 'sleeping',
-  hello: 'happy',
+  hello: 'idle',
   think: 'thinking',
   talk: 'answering',
   read: 'listening',
@@ -37,7 +37,7 @@ const drawing: Record<Mood, keyof typeof FRAMES> = {
   web: 'listening',
   friends: 'answering',
   oops: 'sorry',
-  done: 'happy',
+  done: 'idle',
 }
 
 const base = (path: unknown) =>
