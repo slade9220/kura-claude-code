@@ -2,7 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
 
 import type { Kura, Mood } from '../types'
-import { COLUMNS, FRAMES, ROWS } from './frames'
+import { COLUMNS, FRAMES as NOTE_FRAMES, ROWS } from './frames'
+import { PAL_FRAMES } from './frames-pal'
 import { langOf, WORDS } from './words'
 import type { Words } from './words'
 
@@ -20,10 +21,13 @@ const hasPixels = atom({ plugin: 'kura', key: 'hasPixels' } as const, false)
 
 const pick = <T,>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)] as T
 
-// Which of the app's drawings (KuraMood) for each mood here.
+// KuraNote's drawings, plus two from KuraPal: asleep (eyes shut, breathing, Zz) and happy.
+const FRAMES = { ...NOTE_FRAMES, ...PAL_FRAMES }
+
+// Which drawing for each mood here.
 const drawing: Record<Mood, keyof typeof FRAMES> = {
-  sleep: 'idle',
-  hello: 'answering',
+  sleep: 'sleeping',
+  hello: 'happy',
   think: 'thinking',
   talk: 'answering',
   read: 'listening',
@@ -33,7 +37,7 @@ const drawing: Record<Mood, keyof typeof FRAMES> = {
   web: 'listening',
   friends: 'answering',
   oops: 'sorry',
-  done: 'answering',
+  done: 'happy',
 }
 
 const base = (path: unknown) =>
@@ -74,6 +78,8 @@ const forTool = (w: Words, tool: string, input: Record<string, unknown>): Kura =
 let w: Words = WORDS.en
 let ticker: Timer | undefined
 let nap: Timer | undefined
+// While Kura sleeps the frames keep turning, slower: he breathes.
+let dozing = false
 let lastKind = ''
 // Worked out once per process, not per session: after /clear or /resume the
 // session's $.state starts over and no session.start fires, so Kura would lose
@@ -88,7 +94,8 @@ function say($: EngineInterface, next: Kura) {
 
 function startTicking($: EngineInterface) {
   nap?.cancel()
-  if (ticker) return
+  if (ticker && !dozing) return
+  stopTicking()
   ticker = $.clock.every(500, () => {
     void update($, frame, f => (f + 1) % FRAMES.idle.length)
   })
@@ -97,12 +104,18 @@ function startTicking($: EngineInterface) {
 function stopTicking() {
   ticker?.cancel()
   ticker = undefined
+  dozing = false
 }
 
 function scheduleNap($: EngineInterface) {
   nap?.cancel()
   nap = $.clock.after(90_000, () => {
     void say($, { mood: 'sleep', line: pick(w.sleepy) })
+    stopTicking()
+    dozing = true
+    ticker = $.clock.every(750, () => {
+      void update($, frame, f => (f + 1) % FRAMES.idle.length)
+    })
   })
 }
 
@@ -226,7 +239,7 @@ export const register: Register = on => {
     const { mood, line: said } = await read($, kura)
     // A fresh session's state still holds the English greeting.
     const line = mood === 'hello' && said === WORDS.en.hello ? w.hello : said
-    const f = e.props.isWorking ? await read($, frame) : 0
+    const f = e.props.isWorking || mood === 'sleep' ? await read($, frame) : 0
     const ui = $.ui.resolve(e)
     const { Box, Text } = ui
     const fox = '#FF8C28'

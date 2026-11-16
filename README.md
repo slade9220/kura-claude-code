@@ -7,7 +7,7 @@ and reacts to what Claude is doing, like the paperclip of old office software, m
 - **Reads** the file Claude opens, **sniffs around** when it searches the code, **snoops on the web**
 - **Perks up his ears** while Claude writes code or runs a command (the bubble shows what it's doing)
 - **Looks sorry** when something fails
-- **Says "Done!"**, then falls asleep after 90 seconds of quiet
+- **Says "Done!"** with a happy face, then falls asleep after 90 seconds of quiet: eyes shut, breathing, Zz
 
 When you send a message he does his best paperclip impression: *“It looks like you want…”*.
 
