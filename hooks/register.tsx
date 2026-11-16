@@ -75,6 +75,12 @@ let w: Words = WORDS.en
 let ticker: Timer | undefined
 let nap: Timer | undefined
 let lastKind = ''
+// Worked out once per process, not per session: after /clear or /resume the
+// session's $.state starts over and no session.start fires, so Kura would lose
+// his PNG face (back to colored cells) and his language.
+let pixels = false
+let setUp: Promise<void> | undefined
+let setUpFor: string | undefined
 
 function say($: EngineInterface, next: Kura) {
   return update($, kura, () => next).catch(() => {})
@@ -116,19 +122,45 @@ async function language($: EngineInterface) {
   ])
 }
 
+async function setUpProcess($: EngineInterface) {
+  w = WORDS[await language($).catch(() => 'en' as const)]
+  $.command.register({ name: 'kura', description: w.command })
+  const program = (await $.env.get('TERM_PROGRAM')) ?? ''
+  const term = (await $.env.get('TERM')) ?? ''
+  const inTmux = Boolean(await $.env.get('TMUX'))
+  pixels = !inTmux && (/ghostty/i.test(program) || /kitty/i.test(term))
+}
+
+// Runs at the first hook of every session this process goes through.
+async function ensureSetUp($: EngineInterface) {
+  setUp ??= setUpProcess($)
+  await setUp
+  const id = await $.session.id().catch(() => '')
+  if (id === setUpFor) return
+  setUpFor = id
+  await update($, hasPixels, () => pixels).catch(() => {})
+  await say($, { mood: 'hello', line: w.hello })
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    w = WORDS[await language($).catch(() => 'en' as const)]
-    $.command.register({ name: 'kura', description: w.command })
-    await say($, { mood: 'hello', line: w.hello })
-    const program = (await $.env.get('TERM_PROGRAM')) ?? ''
-    const term = (await $.env.get('TERM')) ?? ''
-    const inTmux = Boolean(await $.env.get('TMUX'))
-    await update($, hasPixels, () => !inTmux && (/ghostty/i.test(program) || /kitty/i.test(term)))
+    setUp = undefined
+    await ensureSetUp($)
+    return next(e)
+  })
+
+  // /clear and /resume: a new session id, fresh $.state, no session.start.
+  on('session.end', async ($, e, next) => {
+    if (e.reason === 'clear' || e.reason === 'resume') {
+      stopTicking()
+      nap?.cancel()
+      setUpFor = undefined
+    }
     return next(e)
   })
 
   on('prompt.submit', async ($, e, next) => {
+    await ensureSetUp($)
     if (!e.command && e.text.trim()) {
       // The paperclip moment.
       await say($, { mood: 'hello', line: w.looksLike(short(e.text.trim().replace(/\s+/g, ' '), 30)) })
@@ -138,6 +170,7 @@ export const register: Register = on => {
 
   on('turn.start', async ($, e, next) => {
     if (!e.agentId) {
+      await ensureSetUp($)
       lastKind = ''
       startTicking($)
     }
@@ -190,7 +223,9 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey || (await read($, isHidden))) return next(e)
 
-    const { mood, line } = await read($, kura)
+    const { mood, line: said } = await read($, kura)
+    // A fresh session's state still holds the English greeting.
+    const line = mood === 'hello' && said === WORDS.en.hello ? w.hello : said
     const f = e.props.isWorking ? await read($, frame) : 0
     const ui = $.ui.resolve(e)
     const { Box, Text } = ui
@@ -198,7 +233,6 @@ export const register: Register = on => {
     const dots = e.props.isWorking && mood !== 'oops' ? ['', '.', '..', '...', '..', '.'][f] ?? '' : ''
     const cells = FRAMES[drawing[mood]][f] ?? FRAMES[drawing[mood]][0] ?? ''
     const png = `${$.plugin.root}/assets/${drawing[mood]}-${f}.png`
-    const pixels = await read($, hasPixels)
 
     return (
       <Box flexDirection="row" alignItems="center">
